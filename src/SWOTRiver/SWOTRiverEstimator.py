@@ -1169,31 +1169,42 @@ class SWOTRiverEstimator(SWOTL2):
                 # Build up array of data to be smoothed from downstream to
                 # upstream.  Adjust along-reach to be cumulative across
                 # reach boundaries.
-                first_node = 0
-                distances = np.array([])
-                heights = np.array([])
 
-                if this_reach_id < n_reach:
+                # if this reach is the first reach with no upstream reach
+                if this_reach_id == 1:
                     reach_downstream = river_reach_collection[
                         ind.index(this_reach_id+1)]
                     distances = np.concatenate([
-                        reach_downstream.s, distances])
+                        river_reach.s, reach_downstream.s+river_reach.s[-1]])
                     heights = np.concatenate([
-                        reach_downstream.h_n_ave, heights])
-
-                distances = np.concatenate([
-                    river_reach.s, distances+river_reach.s[-1]])
-                heights = np.concatenate([heights, river_reach.h_n_ave])
-
-                if this_reach_id > 1:
+                        river_reach.h_n_ave, reach_downstream.h_n_ave])
+                    first_node = 0
+  
+                # if this reach is the last reach with no downstream reach
+                elif this_reach_id == n_reach:
                     reach_upstream = river_reach_collection[
                         ind.index(this_reach_id-1)]
-                    first_node = first_node + len(reach_upstream.h_n_ave)
-
                     distances = np.concatenate([
-                        reach_upstream.s, distances+reach_upstream.s[-1]])
+                        reach_upstream.s, river_reach.s+reach_upstream.s[-1]])
                     heights = np.concatenate([
-                        reach_upstream.h_n_ave, heights])
+                        reach_upstream.h_n_ave, river_reach.h_n_ave])
+                    first_node = len(reach_upstream.s)
+
+                # if this reach is between 1st and last reaches
+                else:
+                    reach_upstream = river_reach_collection[
+                        ind.index(this_reach_id-1)]
+                    reach_downstream = river_reach_collection[
+                        ind.index(this_reach_id+1)]
+                    distances = np.concatenate([
+                        reach_upstream.s,
+                        river_reach.s+reach_upstream.s[-1],
+                        reach_downstream.s+reach_upstream.s[-1]+river_reach.s[-1]])
+                    heights = np.concatenate([
+                        reach_upstream.h_n_ave,
+                        river_reach.h_n_ave,
+                        reach_downstream.h_n_ave])
+                    first_node = len(reach_upstream.s)
 
                 last_node = first_node + len(river_reach.h_n_ave) - 1
 
