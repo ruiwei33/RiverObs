@@ -535,7 +535,8 @@ class SWOTRiverEstimator(SWOTL2):
         for i_reach, reach_idx in enumerate(self.reaches.reach_idx):
 
             if len(self.reaches[i_reach].x) <= 3:
-                print("reach does not have enought points", len(reach.x))
+                print("reach does not have enough points",
+                      len(self.reaches[i_reach].x))
                 continue
 
             if self.verbose:
@@ -1153,14 +1154,14 @@ class SWOTRiverEstimator(SWOTL2):
         window_size_sigma_ratio : default is 5
 
         output:
-        slp_reach_enhncd: enhanced reach slopes
+        enhanced_slopes: enhanced reach slopes
         """
         # get list of reach index
         n_reach = len(river_reach_collection)
         ind = [reach.reach_indx[0] for reach in river_reach_collection]
 
         enhanced_slopes = []
-        for this, river_reach in enumerate(river_reach_collection):
+        for river_reach in river_reach_collection:
 
             this_reach_len = river_reach.s.max() - river_reach.s.min()
             this_reach_id = river_reach.reach_indx[0]
@@ -1183,7 +1184,7 @@ class SWOTRiverEstimator(SWOTL2):
 
                 distances = np.concatenate([
                     river_reach.s, distances+river_reach.s[-1]])
-                heights = np.concatenate([heights, river_reach.h_n_ave])
+                heights = np.concatenate([river_reach.h_n_ave, heights])
 
                 if this_reach_id > 1:
                     reach_upstream = river_reach_collection[
@@ -1210,7 +1211,7 @@ class SWOTRiverEstimator(SWOTL2):
                 heights_smooth = heights_smooth + slope*(
                     distances - distances[0])
                 enhanced_slopes.append(
-                    -(heights_smooth[last_node] - heights_smooth[first_node]
+                    (heights_smooth[last_node] - heights_smooth[first_node]
                     )/this_reach_len)
 
             else:
@@ -1219,7 +1220,7 @@ class SWOTRiverEstimator(SWOTL2):
                     /this_reach_len)
         return enhanced_slopes
 
-    @classmethod
+    @staticmethod
     def gaussian_averaging(distances, heights, window_size, sigma):
         """
         Gaussian smoothing of heights using distances
