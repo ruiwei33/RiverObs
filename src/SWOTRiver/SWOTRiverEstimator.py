@@ -228,10 +228,10 @@ class SWOTRiverEstimator(SWOTL2):
                        if xtrack_kwd in self.nc.variables.keys() else None)
         
         self.wet_tropo_error = (self.get('wet_tropo_error')
-                       if 'wet_tropo_error' in self.nc.variables.keys() else None) #--- rui add wet tropo and inst errors
+                       if 'wet_tropo_error' in self.nc.variables.keys() else None) 
         
         self.inst_error = (self.get('height_instrument_error')
-                       if 'height_instrument_error' in self.nc.variables.keys() else None) #--- rui add wet tropo and inst 
+                       if 'height_instrument_error' in self.nc.variables.keys() else None) 
 
         good = ~mask
         self.lat = self.lat[good]
@@ -241,9 +241,9 @@ class SWOTRiverEstimator(SWOTL2):
         self.klass = self.klass[good]
         if self.wet_tropo_error is not None:
             print('wet_tropo and inst error added')
-            self.h_noise = self.h_noise[good] + self.wet_tropo_error[good] + self.inst_error[good]  #--rui add wet tropo and
+            self.h_noise = self.h_noise[good] + self.wet_tropo_error[good] + self.inst_error[good]  
         else: self.h_noise = self.h_noise[good]
-        self.h_noise = self.h_noise[good]
+        self.h_noise = self.h_noise[good]    
         if self.xtrack is not None:
             self.xtrack = self.xtrack[good]
         self.img_x = self.img_x[good]  # range or x index
@@ -536,6 +536,8 @@ class SWOTRiverEstimator(SWOTL2):
                 # add enhanced slope to river reach outputs
                 out_river_reach.metadata['slp_enhncd'] = np.float32(
                     enhanced_slope)
+                
+                SWOTRiverEstimator.reach_field_list(out_river_reach, enhanced_slope)
 
                 out_river_reach_collection.append(out_river_reach)
                 
@@ -953,8 +955,15 @@ class SWOTRiverEstimator(SWOTL2):
         else:
             river_reach_kw_args['xtrack'] = None
 
+        SWOTRiverEstimator.node_field_list(river_reach_kw_args,
+                                           node_index, reach_index, 
+                                           lat_median, lon_median, 
+                                           xtrack_median, h_ort_ave,
+                                           h_ell_ave,geoid_height_format,
+                                           width_area, area, nobs_h, 
+                                           wet_tropo_error_median, inst_error_median)    
+            
         river_reach = RiverReach(**river_reach_kw_args)
-
         # Store, if desired
         if self.store_obs:
             self.river_obs_collection[reach_idx] = self.river_obs
@@ -1371,6 +1380,172 @@ class SWOTRiverEstimator(SWOTL2):
                 weights.sum())
 
         return smooth_heights
+    
+    @staticmethod
+    def reach_field_list(out_river_reach, enhanced_slope):   #-----------------------rui, field_list methods
+        """
+        write out the reach fields to shapefiles from Prod_Des_HR_River_Vecst1c.180409.xlsx
+        """
+        out_river_reach.metadata['reach_id'] = out_river_reach.metadata['reach_idx']
+        out_river_reach.metadata['time_day'] = np.float32(-9999)
+        out_river_reach.metadata['time_sec'] = np.float32(-9999)
+        out_river_reach.metadata['time_string'] = np.float32(-9999)
+        out_river_reach.metadata['p_latitud'] = (out_river_reach.metadata['lat_max'] +                                                                                   out_river_reach.metadata['lat_min'])/2
+        out_river_reach.metadata['p_longitud'] = (out_river_reach.metadata['lon_max'] +                                                                                   out_river_reach.metadata['lon_min'])/2
+        out_river_reach.metadata['height'] = out_river_reach.metadata['height']
+        out_river_reach.metadata['height_u'] = np.float32(-9999)
+        out_river_reach.metadata['slope'] = out_river_reach.metadata['s_fit'] * -1000000
+        out_river_reach.metadata['slope_u'] = np.float32(-9999)
+        out_river_reach.metadata['width'] = out_river_reach.metadata['w_area_ave']
+        out_river_reach.metadata['width_u'] = np.float32(-9999)
+        out_river_reach.metadata['slope2'] = np.float32(enhanced_slope) * 1000000
+        out_river_reach.metadata['slope2_u'] = np.float32(-9999)
+        out_river_reach.metadata['d_x_area'] = np.float32(-9999)
+        out_river_reach.metadata['d_x_area_u'] = np.float32(-9999)
+        out_river_reach.metadata['area_detct'] = np.float32(-9999)
+        out_river_reach.metadata['area_det_u'] = np.float32(-9999)
+        out_river_reach.metadata['area_total'] = np.float32(-9999)
+        out_river_reach.metadata['area_tot_u'] = np.float32(-9999)
+        out_river_reach.metadata['area_of_ht'] = np.float32(-9999)
+        out_river_reach.metadata['layovr_val'] = np.float32(-9999)
+        out_river_reach.metadata['node_dist'] = np.float32(-9999)
+        out_river_reach.metadata['xtrk_dist'] = np.float32(-9999)
+        out_river_reach.metadata['discharge'] = np.float32(-9999)
+        out_river_reach.metadata['dischg_u'] = np.float32(-9999)
+        out_river_reach.metadata['discharge1'] = np.float32(-9999)
+        out_river_reach.metadata['dischg1_u'] = np.float32(-9999)
+        out_river_reach.metadata['discharge2'] = np.float32(-9999)
+        out_river_reach.metadata['dischg2_u'] = np.float32(-9999)
+        out_river_reach.metadata['discharge3'] = np.float32(-9999)
+        out_river_reach.metadata['dischg3_u'] = np.float32(-9999)
+
+        out_river_reach.metadata['f_dark'] = np.float32(-9999)
+        out_river_reach.metadata['f_frozen'] = np.float32(-9999)
+        out_river_reach.metadata['f_layover'] = np.float32(-9999)
+        out_river_reach.metadata['n_good_nod'] = np.float32(-9999)
+        out_river_reach.metadata['f_quailty'] = np.float32(-9999)
+        out_river_reach.metadata['f_partial'] = np.float32(-9999)
+        out_river_reach.metadata['f_xovr_cal'] = np.float32(-9999)
+        
+        out_river_reach.metadata['geoid_hght'] = out_river_reach.metadata['geoid_modl']
+        out_river_reach.metadata['geoid_slop'] = np.float32(-9999)
+        out_river_reach.metadata['earth_tide'] = np.float32(-9999)
+        out_river_reach.metadata['pole_tide'] = np.float32(-9999)
+        out_river_reach.metadata['load_tide'] = np.float32(-9999)
+        
+        out_river_reach.metadata['c_dry_trop'] = np.float32(-9999)
+        out_river_reach.metadata['c_wet_trop'] = np.float32(-9999)
+        out_river_reach.metadata['c_iono'] = np.float32(-9999)
+        
+        out_river_reach.metadata['c_xovr_cal'] = np.float32(-9999)
+        out_river_reach.metadata['c_kar_att'] = np.float32(-9999)
+        out_river_reach.metadata['c_h_bias'] = np.float32(-9999)
+        out_river_reach.metadata['c_sys_cg'] = np.float32(-9999)
+        out_river_reach.metadata['c_intr_cal'] = np.float32(-9999)
+        
+        
+        out_river_reach.metadata['n_reach_up'] = np.float32(-9999)
+        out_river_reach.metadata['n_reach_dn'] = np.float32(-9999)
+        out_river_reach.metadata['rch_id_up'] = np.float32(-9999)
+        out_river_reach.metadata['rch_id_dn'] = np.float32(-9999)
+        out_river_reach.metadata['p_height'] = np.float32(-9999)
+        out_river_reach.metadata['p_hght_var'] = np.float32(-9999)
+        out_river_reach.metadata['p_width'] = np.float32(-9999)
+        out_river_reach.metadata['p_wid_var'] = np.float32(-9999)
+        out_river_reach.metadata['p_class'] = np.float32(-9999)
+        out_river_reach.metadata['p_n_nodes'] = np.float32(-9999)
+        out_river_reach.metadata['p_dist_out'] = np.float32(-9999)
+        out_river_reach.metadata['p_length'] = np.float32(-9999)
+        out_river_reach.metadata['mean_flow'] = np.float32(-9999)
+        out_river_reach.metadata['grand_id'] = np.float32(-9999)
+        out_river_reach.metadata['dischg1_c1'] = np.float32(-9999)
+        out_river_reach.metadata['dischg1_c2'] = np.float32(-9999)
+        out_river_reach.metadata['dischg2_c1'] = np.float32(-9999)
+        out_river_reach.metadata['dischg2_c2'] = np.float32(-9999)
+        out_river_reach.metadata['dischg3_c1'] = np.float32(-9999)
+        out_river_reach.metadata['dischg3_c2'] = np.float32(-9999)
+        out_river_reach.metadata['obs_ratio'] = out_river_reach.metadata['reach_obsrvd_ratio']          
+   
+    @staticmethod
+    def node_field_list(river_reach_kw_args, node_index, 
+                        reach_index, lat_median, lon_median, 
+                        xtrack_median, h_ort_ave, h_ell_ave, geoid_height, 
+                        width_area, area, nobs_h, wet_tropo_error, inst_error):
+        river_reach_kw_args['reach_id'] = np.ones(len(node_index)) * (reach_index)
+        river_reach_kw_args['node_id'] = node_index
+        river_reach_kw_args['time_day'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['time_sec'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['time_string'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['latitude'] = lat_median
+        river_reach_kw_args['longitude'] = lon_median
+        river_reach_kw_args['latitude_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['longitud_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['height'] = h_ort_ave
+        river_reach_kw_args['height_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['width'] = np.asarray(['NaN' if width < 0 else width for width in width_area])  # width_area   
+        river_reach_kw_args['width_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['area_detct'] =  np.asarray(['NaN' if area_detct < 0 else area_detct for area_detct in area])   
+        river_reach_kw_args['area_det_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['area_total'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['area_tot_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['area_of_ht'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['layovr_val'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['node_dist'] = np.ones(len(node_index)) * -9999
+        
+        if xtrack_median is not None:
+            print('xtrack_median added for L2')
+            river_reach_kw_args['xtrk_dist'] = xtrack_median
+        else: river_reach_kw_args['xtrk_dist'] = np.ones(len(node_index)) * -9999
+            
+        if wet_tropo_error is not None:
+            print('wet_tropo_median added for L2')
+            river_reach_kw_args['wet_error'] = wet_tropo_error
+        else: river_reach_kw_args['wet_error'] = np.ones(len(node_index)) * -9999   
+            
+        if inst_error is not None:
+            print('inst_median added for L2')
+            river_reach_kw_args['inst_error'] = inst_error
+        else: river_reach_kw_args['inst_error'] = np.ones(len(node_index)) * -9999  
+            
+        river_reach_kw_args['height2'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['height2_u'] = np.ones(len(node_index)) * -9999    
+
+        river_reach_kw_args['f_dark'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['f_frozen'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['f_layover'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['n_good_pix'] = nobs_h # np.ones(len(node_index)) * -9999
+        river_reach_kw_args['f_quality'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['f_partial'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['f_xovr_cal'] = np.ones(len(node_index)) * -9999
+        
+        river_reach_kw_args['rdr_sigma0'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['rdr_sig0_u'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['sigma0_cal'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_sig0_atm'] = np.ones(len(node_index)) * -9999
+        
+        river_reach_kw_args['geoid_hght'] = np.asarray(geoid_height)
+        river_reach_kw_args['earth_tide'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['pole_tide'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['load_tide'] = np.ones(len(node_index)) * -9999
+        
+        river_reach_kw_args['c_dry_trop'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_wet_trop'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_iono'] = np.ones(len(node_index)) * -9999
+        
+        river_reach_kw_args['c_xovr_cal'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_kar_att'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_h_bias'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_sys_cg'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['c_intr_cal'] = np.ones(len(node_index)) * -9999
+        
+        river_reach_kw_args['p_height'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['p_hght_var'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['p_width'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['p_wid_var'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['p_dist_out'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['p_class'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['grand_id'] = np.ones(len(node_index)) * -9999
+        river_reach_kw_args['n_gd_pix'] = nobs_h
     
     def add_high_resolution_centerline(self, out_river_reach_collection, centerlines):
         reach_id_list = [reach.metadata['reach_idx'] for reach in out_river_reach_collection]
