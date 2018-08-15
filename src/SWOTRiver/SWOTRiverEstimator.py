@@ -224,8 +224,10 @@ class SWOTRiverEstimator(SWOTL2):
         if np.ma.is_masked(self.h_noise):
             mask = mask | self.h_noise.mask
 
-        self.xtrack = (self.get(xtrack_kwd)
-                       if xtrack_kwd in self.nc.variables.keys() else None)
+        try:
+            self.xtrack = self.get(xtrack_kwd)
+        except KeyError:
+            self.xtrack = None
         
         self.wet_tropo_error = (self.get('wet_tropo_error')
                        if 'wet_tropo_error' in self.nc.variables.keys() else None) 
