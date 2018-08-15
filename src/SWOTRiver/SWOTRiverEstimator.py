@@ -880,6 +880,17 @@ class SWOTRiverEstimator(SWOTL2):
                 self.river_obs.n_nodes,
                 dtype=np.float64) * self.river_obs.missing_value
             width_db = width_db[self.river_obs.populated_nodes]
+            
+        # h_ort, and h_ell for node shapefiles, and nobs_h > 100 filter
+        h_ort_ave = h_noise_ave - np.reshape(geoid_height,(len(geoid_height),))  # h_noise_ave_geoid
+        h_ell_ave = h_noise_ave - 0
+        h_ort_ave[nobs_h < 100] = 'NaN'   #replace nobs_h < 100 with NaN for node shapefiles  
+        h_ell_ave[nobs_h < 100] = 'NaN'
+        
+        h_ell_4_all_h = h_noise_ave - 0
+        h_ell_4_all_h[nobs_h < 100] = 'NaN'
+        if xtrack_median is not None:
+            h_ell_4_all_h[xtrack_median > 60000] = 'NaN'    
         
         #  add back all node for linear fit     
         populated_node_id = node_index          
@@ -891,7 +902,7 @@ class SWOTRiverEstimator(SWOTL2):
         
         for i, n_id in enumerate(populated_node_id):
             ii=list(all_node_id).index(n_id)
-            all_h[ii] = h_noise_ave[i]    
+            all_h[ii] = h_ell_4_all_h[i]    
         
         all_h = np.asarray(all_h).astype('float64')
         all_h_fill = all_h + 0
@@ -1002,6 +1013,8 @@ class SWOTRiverEstimator(SWOTL2):
         all_s = river_reach.all_s                          
         all_h = river_reach.all_h
         reach_obsrvd_ratio = river_reach.reach_obsrvd_ratio
+        
+        print('reach_obsrvd_ratio',reach_obsrvd_ratio)
 
         if reach_obsrvd_ratio >= self.min_reach_obsrvd_ratio:
             all_s_for_fit = np.c_[(all_s-np.nanmax(all_s)/2), np.ones(len(all_s), dtype=all_s.dtype)]
@@ -1081,7 +1094,11 @@ class SWOTRiverEstimator(SWOTL2):
         reach_stats['slp_nr'] = np.float32(reach_stats['slp_nr'])
         reach_stats['nr_rsqrd'] = np.float32(reach_stats['nr_rsqrd'])
         reach_stats['nr_mse'] = np.float32(reach_stats['nr_mse'])
+        reach_stats['h_fit'] = np.float32(fit_h_reach)   
+        reach_stats['s_fit'] = np.float32(fit_s_reach)
         reach_stats['geoid_modl'] = np.float32(reach_stats['geoid_modl'])
+        reach_stats['height'] = np.float32(reach_stats['h_fit']-reach_stats['geoid_modl'])
+        reach_stats['reach_obsrvd_ratio'] = reach_obsrvd_ratio 
 
         river_reach.metadata = reach_stats
         return river_reach
