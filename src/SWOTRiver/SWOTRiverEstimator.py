@@ -760,6 +760,11 @@ class SWOTRiverEstimator(SWOTL2):
         yw = reach.y
         self.river_obs.add_centerline_obs(xw, yw, xw, 'x_prior')
         self.river_obs.add_centerline_obs(xw, yw, yw, 'y_prior')
+        
+        lonw = reach.lon
+        latw = reach.lat
+        self.river_obs.add_centerline_obs(lonw, latw, lonw, 'lon_prior')
+        self.river_obs.add_centerline_obs(lonw, latw, latw, 'lat_prior')
 
         # should probably compute prior lat/lon from prior x,y too
         windex = self.river_obs.centerline_obs['x_prior'].populated_nodes
@@ -770,6 +775,11 @@ class SWOTRiverEstimator(SWOTL2):
         windex = self.river_obs.centerline_obs['y_prior'].populated_nodes
         y_prior = yw
         y_prior[windex] = self.river_obs.centerline_obs['y_prior'].v
+        
+        lon_prior = lonw                                   
+        lon_prior = lon_prior[self.river_obs.populated_nodes]
+        lat_prior = latw
+        lat_prior = lat_prior[self.river_obs.populated_nodes]
 
         node_index = np.arange(len(y_prior))
         node_index = node_index[self.river_obs.populated_nodes]
@@ -914,6 +924,8 @@ class SWOTRiverEstimator(SWOTL2):
             'nobs_h': nobs_h.astype('int32'),
             'x_prior': x_prior.astype('float64'),
             'y_prior': y_prior.astype('float64'),
+            'lon_prior': lon_prior.astype('float64'),                
+            'lat_prior': lat_prior.astype('float64'),
             'all_s': all_s.astype('float64'),                  
             'all_h': all_h.astype('float64'),
             'all_h_fill': np.asarray(all_h_fill).astype('float64'),
