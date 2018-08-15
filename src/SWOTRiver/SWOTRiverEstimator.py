@@ -538,6 +538,8 @@ class SWOTRiverEstimator(SWOTL2):
                     enhanced_slope)
 
                 out_river_reach_collection.append(out_river_reach)
+                
+        self.add_high_resolution_centerline(out_river_reach_collection, self.centerlines)          
 
         return out_river_reach_collection
 
@@ -784,7 +786,7 @@ class SWOTRiverEstimator(SWOTL2):
         if self.xtrack is not None:
             self.river_obs.add_obs('xtrack', self.xtrack)
         self.river_obs.add_obs('inundated_area', self.inundated_area)
-        if self.wet_tropo_error is not None:   # rui ------ wet tropo and inst error for node  
+        if self.wet_tropo_error is not None:   
             self.river_obs.add_obs('wet_tropo_error', self.wet_tropo_error)
             self.river_obs.add_obs('inst_error', self.inst_error)
 
@@ -794,7 +796,7 @@ class SWOTRiverEstimator(SWOTL2):
 
         if self.xtrack is not None:
             dsets_to_load.append('xtrack')
-        if self.wet_tropo_error is not None:  # rui ---- wet tropo and inst error for node
+        if self.wet_tropo_error is not None:  
             dsets_to_load.append('wet_tropo_error')
             dsets_to_load.append('inst_error')     
 
@@ -814,7 +816,7 @@ class SWOTRiverEstimator(SWOTL2):
                 self.river_obs.get_node_stat('median', 'xtrack'))
         else:
             xtrack_median = None
-        if self.wet_tropo_error is not None:   # rui ---- wet tropo and inst error for node
+        if self.wet_tropo_error is not None:   
             wet_tropo_error_median = np.asarray(
                 self.river_obs.get_node_stat('median', 'wet_tropo_error'))
             inst_error_median = np.asarray(
@@ -912,7 +914,7 @@ class SWOTRiverEstimator(SWOTL2):
             'nobs_h': nobs_h.astype('int32'),
             'x_prior': x_prior.astype('float64'),
             'y_prior': y_prior.astype('float64'),
-            'all_s': all_s.astype('float64'),                  # --------rui, all node h & s for reach linear fit
+            'all_s': all_s.astype('float64'),                  
             'all_h': all_h.astype('float64'),
             'all_h_fill': np.asarray(all_h_fill).astype('float64'),
             'reach_obsrvd_ratio' : reach_obsrvd_ratio,
@@ -980,7 +982,7 @@ class SWOTRiverEstimator(SWOTL2):
         width_area = river_reach.w_area
         area = river_reach.area
         
-        all_s = river_reach.all_s                          #-------rui, reach averaged height
+        all_s = river_reach.all_s                          
         all_h = river_reach.all_h
         reach_obsrvd_ratio = river_reach.reach_obsrvd_ratio
 
@@ -993,7 +995,7 @@ class SWOTRiverEstimator(SWOTL2):
             
         else:
             fit_h_reach = 'NaN'
-            fit_s_reach = 'NaN'                            #-------rui, reach averaged height
+            fit_s_reach = 'NaN'                            
 
         # Check to see if there are sufficient number of points for fit
         ngood = len(s_median)
@@ -1334,3 +1336,14 @@ class SWOTRiverEstimator(SWOTL2):
                 weights.sum())
 
         return smooth_heights
+    
+    def add_high_resolution_centerline(self, out_river_reach_collection, centerlines):
+        reach_id_list = [reach.metadata['reach_idx'] for reach in out_river_reach_collection]
+        centerline_id_list = [centerline.metadata['Reach_ID'] for centerline in centerlines]
+        reach_id_in_centerline_id = []
+        for reach_id in reach_id_list:
+            reach_id_in_centerline_id.append(centerline_id_list.index(reach_id))
+        
+        for i in range(len(out_river_reach_collection)):
+            setattr(out_river_reach_collection[i], 'lat_cl', centerlines[reach_id_in_centerline_id[i]].lat)
+            setattr(out_river_reach_collection[i], 'lon_cl', centerlines[reach_id_in_centerline_id[i]].lon)
