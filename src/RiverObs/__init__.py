@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 from .ReachExtractor import ReachExtractor, RiverReach
+from .NodeExtractor import NodeExtractor, RiverReach
 from .RiverNode import RiverNode
 from .RiverObs import RiverObs
 from .FitRiver import FitRiver

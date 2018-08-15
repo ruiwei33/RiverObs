@@ -15,6 +15,7 @@ import statsmodels.api
 
 from .SWOTL2 import SWOTL2
 from RiverObs import ReachExtractor
+from RiverObs import NodeExtractor
 from RiverObs import WidthDataBase
 from RiverObs import IteratedRiverObs
 from RiverObs import FitRiver
@@ -361,10 +362,17 @@ class SWOTRiverEstimator(SWOTL2):
         """Get all of the reaches using a ReachExtractor."""
         self.clip = clip
         self.clip_buffer = clip_buffer
-        self.reaches = ReachExtractor(
-            shape_file_root, self, clip=clip, clip_buffer=clip_buffer)
-
+        self.reaches = NodeExtractor(               
+            shape_file_root, self)
         return self.reaches
+    
+    def get_centerlines(self, centerline_root, clip=True, clip_buffer=0.1):   
+        """Get all of the reaches using a ReachExtractor."""
+        self.clip = clip
+        self.clip_buffer = clip_buffer
+        self.centerlines = ReachExtractor(
+            centerline_root, self, clip=clip, clip_buffer=clip_buffer)
+        return self.centerlines
 
     def get_width_db(self, width_db_file):
         """Open the width data base for later use."""
