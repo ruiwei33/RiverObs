@@ -780,6 +780,8 @@ class SWOTRiverEstimator(SWOTL2):
         lon_prior = lon_prior[self.river_obs.populated_nodes]
         lat_prior = latw
         lat_prior = lat_prior[self.river_obs.populated_nodes]
+        geoid_height = np.array(reach.geoid_height[self.river_obs.populated_nodes])  
+        geoid_height_format = np.reshape(geoid_height,(len(geoid_height),))
 
         node_index = np.arange(len(y_prior))
         node_index = node_index[self.river_obs.populated_nodes]
@@ -926,6 +928,7 @@ class SWOTRiverEstimator(SWOTL2):
             'y_prior': y_prior.astype('float64'),
             'lon_prior': lon_prior.astype('float64'),                
             'lat_prior': lat_prior.astype('float64'),
+            'geoid_hgt':geoid_height_format.astype('float64'),
             'all_s': all_s.astype('float64'),                  
             'all_h': all_h.astype('float64'),
             'all_h_fill': np.asarray(all_h_fill).astype('float64'),
@@ -994,6 +997,8 @@ class SWOTRiverEstimator(SWOTL2):
         width_area = river_reach.w_area
         area = river_reach.area
         
+        geoid_hgt_node = river_reach.geoid_hgt
+        
         all_s = river_reach.all_s                          
         all_h = river_reach.all_h
         reach_obsrvd_ratio = river_reach.reach_obsrvd_ratio
@@ -1037,7 +1042,7 @@ class SWOTRiverEstimator(SWOTL2):
         # Get the reach statistics for this subreach
         reach_stats = self.get_reach_stats(
             reach_id, reach_idx, s_median, lon_median, lat_median,
-            xtrack_median, width_ptp, width_std, width_area, area, nresults)
+            xtrack_median, width_ptp, width_std, width_area, area, nresults, geoid_hgt_node)
 
         # type-cast reach outputs explicity
         reach_stats['reach_id'] = np.int32(reach_stats['reach_id'])
@@ -1076,6 +1081,7 @@ class SWOTRiverEstimator(SWOTL2):
         reach_stats['slp_nr'] = np.float32(reach_stats['slp_nr'])
         reach_stats['nr_rsqrd'] = np.float32(reach_stats['nr_rsqrd'])
         reach_stats['nr_mse'] = np.float32(reach_stats['nr_mse'])
+        reach_stats['geoid_modl'] = np.float32(reach_stats['geoid_modl'])
 
         river_reach.metadata = reach_stats
         return river_reach
