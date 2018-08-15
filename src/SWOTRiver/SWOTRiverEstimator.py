@@ -226,6 +226,12 @@ class SWOTRiverEstimator(SWOTL2):
 
         self.xtrack = (self.get(xtrack_kwd)
                        if xtrack_kwd in self.nc.variables.keys() else None)
+        
+        self.wet_tropo_error = (self.get('wet_tropo_error')
+                       if 'wet_tropo_error' in self.nc.variables.keys() else None) #--- rui add wet tropo and inst errors
+        
+        self.inst_error = (self.get('height_instrument_error')
+                       if 'height_instrument_error' in self.nc.variables.keys() else None) #--- rui add wet tropo and inst 
 
         good = ~mask
         self.lat = self.lat[good]
@@ -233,6 +239,10 @@ class SWOTRiverEstimator(SWOTL2):
         self.x = self.x[good]
         self.y = self.y[good]
         self.klass = self.klass[good]
+        if self.wet_tropo_error is not None:
+            print('wet_tropo and inst error added')
+            self.h_noise = self.h_noise[good] + self.wet_tropo_error[good] + self.inst_error[good]  #--rui add wet tropo and
+        else: self.h_noise = self.h_noise[good]
         self.h_noise = self.h_noise[good]
         if self.xtrack is not None:
             self.xtrack = self.xtrack[good]
@@ -774,6 +784,9 @@ class SWOTRiverEstimator(SWOTL2):
         if self.xtrack is not None:
             self.river_obs.add_obs('xtrack', self.xtrack)
         self.river_obs.add_obs('inundated_area', self.inundated_area)
+        if self.wet_tropo_error is not None:   # rui ------ wet tropo and inst error for node  
+            self.river_obs.add_obs('wet_tropo_error', self.wet_tropo_error)
+            self.river_obs.add_obs('inst_error', self.inst_error)
 
         dsets_to_load = [
             'h_noise', 'h_flg', 'lon', 'lat', 'xobs', 'yobs', 'inundated_area'
@@ -781,6 +794,9 @@ class SWOTRiverEstimator(SWOTL2):
 
         if self.xtrack is not None:
             dsets_to_load.append('xtrack')
+        if self.wet_tropo_error is not None:  # rui ---- wet tropo and inst error for node
+            dsets_to_load.append('wet_tropo_error')
+            dsets_to_load.append('inst_error')     
 
         self.river_obs.load_nodes(dsets_to_load)
 
@@ -798,6 +814,14 @@ class SWOTRiverEstimator(SWOTL2):
                 self.river_obs.get_node_stat('median', 'xtrack'))
         else:
             xtrack_median = None
+        if self.wet_tropo_error is not None:   # rui ---- wet tropo and inst error for node
+            wet_tropo_error_median = np.asarray(
+                self.river_obs.get_node_stat('median', 'wet_tropo_error'))
+            inst_error_median = np.asarray(
+                self.river_obs.get_node_stat('median', 'inst_error'))
+        else:
+            wet_tropo_error_median = None  
+            inst_error_median = None     
 
         lon_median = np.asarray(self.river_obs.get_node_stat('median', 'lon'))
         lat_median = np.asarray(self.river_obs.get_node_stat('median', 'lat'))
