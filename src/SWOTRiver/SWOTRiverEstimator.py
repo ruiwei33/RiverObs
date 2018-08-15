@@ -242,8 +242,7 @@ class SWOTRiverEstimator(SWOTL2):
         if self.wet_tropo_error is not None:
             print('wet_tropo and inst error added')
             self.h_noise = self.h_noise[good] + self.wet_tropo_error[good] + self.inst_error[good]  
-        else: self.h_noise = self.h_noise[good]
-        self.h_noise = self.h_noise[good]    
+        else: self.h_noise = self.h_noise[good]   
         if self.xtrack is not None:
             self.xtrack = self.xtrack[good]
         self.img_x = self.img_x[good]  # range or x index
@@ -644,7 +643,8 @@ class SWOTRiverEstimator(SWOTL2):
         ireach_list_out = []
         reach_zips = zip(river_obs_list, reach_idx_list, ireach_list)
         for river_obs, reach_idx, ireach in reach_zips:
-            if len(river_obs.s) > 0:
+            #if len(river_obs.s) > 0:
+            if len(river_obs.populated_nodes) > 3:  # for trim_end purpose   
                 river_obs_list_out.append(river_obs)
                 reach_idx_list_out.append(reach_idx)
                 ireach_list_out.append(ireach)
@@ -904,7 +904,11 @@ class SWOTRiverEstimator(SWOTL2):
         
         for i, n_id in enumerate(populated_node_id):
             ii=list(all_node_id).index(n_id)
-            all_h[ii] = h_ell_4_all_h[i]    
+            all_h[ii] = h_ell_4_all_h[i]   
+            
+            
+            
+            
         
         all_h = np.asarray(all_h).astype('float64')
         all_h_fill = all_h + 0
@@ -1024,6 +1028,8 @@ class SWOTRiverEstimator(SWOTL2):
         reach_obsrvd_ratio = river_reach.reach_obsrvd_ratio
         
         print('reach_obsrvd_ratio',reach_obsrvd_ratio)
+        
+        
 
         if reach_obsrvd_ratio >= self.min_reach_obsrvd_ratio:
             all_s_for_fit = np.c_[(all_s-np.nanmax(all_s)/2), np.ones(len(all_s), dtype=all_s.dtype)]
@@ -1382,7 +1388,7 @@ class SWOTRiverEstimator(SWOTL2):
         return smooth_heights
     
     @staticmethod
-    def reach_field_list(out_river_reach, enhanced_slope):   #-----------------------rui, field_list methods
+    def reach_field_list(out_river_reach, enhanced_slope):   
         """
         write out the reach fields to shapefiles from Prod_Des_HR_River_Vecst1c.180409.xlsx
         """
