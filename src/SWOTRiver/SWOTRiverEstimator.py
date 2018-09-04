@@ -1149,6 +1149,8 @@ class SWOTRiverEstimator(SWOTL2):
                         width_area, area, nresults):
         """Get statistics for a given reach."""
 
+        ds = np.divide(area, width_area)
+
         reach_stats = collections.OrderedDict()
         reach_stats['reach_id'] = reach_id
         reach_stats['reach_idx'] = reach_idx
@@ -1157,7 +1159,7 @@ class SWOTRiverEstimator(SWOTL2):
         reach_stats['lat_min'] = np.min(lat_median)
         reach_stats['lat_max'] = np.max(lat_median)
         reach_stats['area'] = np.sum(area)
-        reach_stats['length'] = np.max(s_median) - np.min(s_median)
+        reach_stats['length'] = np.sum(ds)
         reach_stats['smin'] = np.min(s_median)
         reach_stats['smax'] = np.max(s_median)
         reach_stats['save'] = np.median(s_median)
@@ -1167,7 +1169,7 @@ class SWOTRiverEstimator(SWOTL2):
         reach_stats['w_std_ave'] = np.median(width_std)
         reach_stats['w_std_min'] = np.min(width_std)
         reach_stats['w_std_max'] = np.max(width_std)
-        reach_stats['w_area_ave'] = np.median(width_area)
+        reach_stats['w_area_ave'] = np.sum(area) / reach_stats['length']
         reach_stats['w_area_min'] = np.min(width_area)
         reach_stats['w_area_max'] = np.max(width_area)
         if xtrack_median is not None:
