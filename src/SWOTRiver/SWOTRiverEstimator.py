@@ -224,10 +224,8 @@ class SWOTRiverEstimator(SWOTL2):
         if np.ma.is_masked(self.h_noise):
             mask = mask | self.h_noise.mask
 
-        try:
-            self.xtrack = self.get(xtrack_kwd)
-        except KeyError:
-            self.xtrack = None
+        self.xtrack = (self.get(xtrack_kwd)
+                       if xtrack_kwd in self.nc.variables.keys() else None)
         
         self.wet_tropo_error = (self.get('wet_tropo_error')
                        if 'wet_tropo_error' in self.nc.variables.keys() else None) 
@@ -1172,6 +1170,7 @@ class SWOTRiverEstimator(SWOTL2):
         reach_stats['w_area_ave'] = np.sum(area) / reach_stats['length']
         reach_stats['w_area_min'] = np.min(width_area)
         reach_stats['w_area_max'] = np.max(width_area)
+        reach_stats['geoid_modl'] = np.median(geoid_hgt_node)
         if xtrack_median is not None:
             reach_stats['xtrck_ave'] = np.median(xtrack_median)
             reach_stats['xtrck_min'] = np.min(xtrack_median)
@@ -1295,6 +1294,9 @@ class SWOTRiverEstimator(SWOTL2):
         # get list of reach index
         n_reach = len(river_reach_collection)
         ind = [reach.reach_indx[0] for reach in river_reach_collection]
+        print(ind)
+        first_reach = ind[0]
+        last_reach = ind[-1]
 
         enhanced_slopes = []
         for river_reach in river_reach_collection:
@@ -1307,12 +1309,13 @@ class SWOTRiverEstimator(SWOTL2):
                 # Build up array of data to be smoothed from downstream to
                 # upstream.  Adjust along-reach to be cumulative across
                 # reach boundaries.
-                if this_reach_obsrvd_ratio >= self.min_reach_obsrvd_ratio:
+                if this_reach_obsrvd_ratio >= self.min_reach_obsrvd_ratio and \
+                            (this_reach_id-1 in ind or this_reach_id+1 in ind):
                     first_node = 0
                     distances = np.array([])
                     heights = np.array([])
 
-                    if this_reach_id < n_reach:
+                    if this_reach_id < last_reach and this_reach_id+1 in ind:
                         reach_downstream = river_reach_collection[
                             ind.index(this_reach_id+1)]
                         distances = np.concatenate([
@@ -1324,7 +1327,7 @@ class SWOTRiverEstimator(SWOTL2):
                         river_reach.all_s, distances+river_reach.all_s[-1]])
                     heights = np.concatenate([river_reach.all_h_fill, heights])
 
-                    if this_reach_id > 1:
+                    if this_reach_id > first_reach and this_reach_id-1 in ind:
                         reach_upstream = river_reach_collection[
                             ind.index(this_reach_id-1)]
                         first_node = first_node + len(reach_upstream.all_h_fill)
@@ -1555,7 +1558,6 @@ class SWOTRiverEstimator(SWOTL2):
         river_reach_kw_args['p_dist_out'] = np.ones(len(node_index)) * -9999
         river_reach_kw_args['p_class'] = np.ones(len(node_index)) * -9999
         river_reach_kw_args['grand_id'] = np.ones(len(node_index)) * -9999
-        river_reach_kw_args['n_gd_pix'] = nobs_h
     
     def add_high_resolution_centerline(self, out_river_reach_collection, centerlines):
         reach_id_list = [reach.metadata['reach_idx'] for reach in out_river_reach_collection]
